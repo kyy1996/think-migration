@@ -20,7 +20,6 @@
             "email": "system@kyy1996.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
            "think\\migration\\": "src"
