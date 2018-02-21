@@ -1,17 +1,11 @@
 <?php
-// +----------------------------------------------------------------------
-// | TopThink [ WE CAN DO IT JUST THINK IT ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016 http://www.topthink.com All rights reserved.
-// +----------------------------------------------------------------------
-// | Author: zhangyajun <448901948@qq.com>
-// +----------------------------------------------------------------------
 
 namespace think\migration\command\seed;
 
 use Phinx\Util\Util;
 use think\console\Input;
 use think\console\input\Argument as InputArgument;
+use think\console\input\Option;
 use think\console\Output;
 use think\migration\command\Seed;
 
@@ -23,9 +17,10 @@ class Create extends Seed
     protected function configure()
     {
         $this->setName('make:seeder')
-            ->setDescription('Create a new database seeder')
-            ->addArgument('name', InputArgument::REQUIRED, 'What is the name of the seeder?')
-            ->setHelp(sprintf('%sCreates a new database seeder%s', PHP_EOL, PHP_EOL));
+             ->setDescription('Create a new database seeder')
+             ->addArgument('name', InputArgument::REQUIRED, 'What is the name of the seeder?')
+             ->addOption('path', null, Option::VALUE_REQUIRED, 'Specify the path in which to create this seeder')
+             ->setHelp(sprintf('%sCreates a new database seeder%s', PHP_EOL, PHP_EOL));
     }
 
     /**
@@ -47,7 +42,7 @@ class Create extends Seed
             }
         }
 
-        $this->verifyMigrationDirectory($path);
+        $this->verifySeedDirectory($path);
 
         $path = realpath($path);
 
@@ -64,10 +59,15 @@ class Create extends Seed
             throw new \InvalidArgumentException(sprintf('The file "%s" already exists', basename($filePath)));
         }
 
+        $namespace = null;
         // inject the class names appropriate to this seeder
         $contents = file_get_contents($this->getTemplate());
         $classes  = [
-            '$className' => $className,
+            '$namespaceDefinition' => $namespace !== null ? ('namespace ' . $namespace . ';') : '',
+            '$namespace'           => $namespace,
+            '$useClassName'        => 'think\migration\Seeder',
+            '$className'           => $className,
+            '$baseClassName'       => 'Seeder',
         ];
         $contents = strtr($contents, $classes);
 
@@ -75,6 +75,7 @@ class Create extends Seed
             throw new \RuntimeException(sprintf('The file "%s" could not be written to', $path));
         }
 
+        $output->writeln('<info>using seed base class</info> ' . $classes['$useClassName']);
         $output->writeln('<info>created</info> .' . str_replace(getcwd(), '', $filePath));
     }
 

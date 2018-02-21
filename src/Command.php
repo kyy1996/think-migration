@@ -1,22 +1,27 @@
 <?php
-// +----------------------------------------------------------------------
-// | ThinkPHP [ WE CAN DO IT JUST THINK IT ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016 http://thinkphp.cn All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
-// +----------------------------------------------------------------------
-// | Author: yunwuxin <448901948@qq.com>
-// +----------------------------------------------------------------------
+
 namespace think\migration;
 
-use InvalidArgumentException;
 use Phinx\Db\Adapter\AdapterFactory;
 use think\Db;
 use think\facade\Config;
+use think\migration\adapter\InputAdapter;
+use think\migration\adapter\OptimizedMySqlAdapter;
+use think\migration\adapter\OutputAdapter;
 
 abstract class Command extends \think\console\Command
 {
+    /**
+     * @var \Phinx\Db\Adapter\AdapterInterface
+     */
+    protected $adapter;
+
+    /**
+     * 配置指令
+     */
+    protected function configure()
+    {
+    }
 
     public function getAdapter()
     {
@@ -26,7 +31,15 @@ abstract class Command extends \think\console\Command
 
         $options = $this->getDbConfig();
 
+        AdapterFactory::instance()->registerAdapter('mysql', OptimizedMySqlAdapter::class);
+
         $adapter = AdapterFactory::instance()->getAdapter($options['adapter'], $options);
+
+        // Automatically time the executed commands
+        $adapter = AdapterFactory::instance()->getWrapper('timed', $adapter);
+
+        $adapter->setInput(new InputAdapter($this->input));
+        $adapter->setOutput(new OutputAdapter($this->output));
 
         if ($adapter->hasOption('table_prefix') || $adapter->hasOption('table_suffix')) {
             $adapter = AdapterFactory::instance()->getWrapper('prefix', $adapter);
@@ -34,7 +47,7 @@ abstract class Command extends \think\console\Command
 
         $this->adapter = $adapter;
 
-        return $adapter;
+        return $this->getAdapter();
     }
 
     /**
@@ -70,6 +83,7 @@ abstract class Command extends \think\console\Command
         }
 
         $dbConfig['default_migration_table'] = $this->getConfig('table', $dbConfig['table_prefix'] . 'migrations');
+        $dbConfig['version_order']           = 'creation';
 
         return $dbConfig;
     }
@@ -80,14 +94,51 @@ abstract class Command extends \think\console\Command
         return isset($config[$name]) ? $config[$name] : $default;
     }
 
+    /**
+     * Verify that the migration directory exists and is writable.
+     *
+     * @param string $path
+     * @throws \InvalidArgumentException
+     * @return void
+     */
     protected function verifyMigrationDirectory($path)
     {
         if (!is_dir($path)) {
-            throw new InvalidArgumentException(sprintf('Migration directory "%s" does not exist', $path));
+            throw new \InvalidArgumentException(sprintf(
+                'Migration directory "%s" does not exist',
+                $path
+            ));
         }
 
         if (!is_writable($path)) {
-            throw new InvalidArgumentException(sprintf('Migration directory "%s" is not writable', $path));
+            throw new \InvalidArgumentException(sprintf(
+                'Migration directory "%s" is not writable',
+                $path
+            ));
+        }
+    }
+
+    /**
+     * Verify that the seed directory exists and is writable.
+     *
+     * @param string $path
+     * @throws \InvalidArgumentException
+     * @return void
+     */
+    protected function verifySeedDirectory($path)
+    {
+        if (!is_dir($path)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Seed directory "%s" does not exist',
+                $path
+            ));
+        }
+
+        if (!is_writable($path)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Seed directory "%s" is not writable',
+                $path
+            ));
         }
     }
 }

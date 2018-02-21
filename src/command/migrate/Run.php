@@ -1,11 +1,4 @@
 <?php
-// +----------------------------------------------------------------------
-// | TopThink [ WE CAN DO IT JUST THINK IT ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016 http://www.topthink.com All rights reserved.
-// +----------------------------------------------------------------------
-// | Author: zhangyajun <448901948@qq.com>
-// +----------------------------------------------------------------------
 
 namespace think\migration\command\migrate;
 
@@ -22,17 +15,18 @@ class Run extends Migrate
      */
     protected function configure()
     {
-        $this->setName('migrate')
+        $this->setName('migrate:run')
              ->setDescription('Migrate the database')
              ->addOption('--target', '-t', InputOption::VALUE_REQUIRED, 'The version number to migrate to')
              ->addOption('--date', '-d', InputOption::VALUE_REQUIRED, 'The date to migrate to')
+             ->addOption('--dry-run', '-x', InputOption::VALUE_NONE, 'Dump query to standard output instead of executing it')
              ->setHelp(<<<EOT
-The <info>migrate</info> command runs all available migrations, optionally up to a specific version
+The <info>migrate:run</info> command runs all available migrations, optionally up to a specific version
 
-<info>php console migrate</info>
-<info>php console migrate -t 20110103081132</info>
-<info>php console migrate -d 20110103</info>
-<info>php console migrate -v</info>
+<info>php console migrate:run</info>
+<info>php console migrate:run -t 20110103081132</info>
+<info>php console migrate:run -d 20110103</info>
+<info>php console migrate:run -v</info>
 
 EOT
              );
@@ -43,7 +37,6 @@ EOT
      *
      * @param Input  $input
      * @param Output $output
-     * @return integer integer 0 on success, or an error code.
      */
     protected function execute(Input $input, Output $output)
     {

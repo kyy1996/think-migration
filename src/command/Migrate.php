@@ -1,13 +1,4 @@
 <?php
-// +----------------------------------------------------------------------
-// | ThinkPHP [ WE CAN DO IT JUST THINK IT ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016 http://thinkphp.cn All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
-// +----------------------------------------------------------------------
-// | Author: yunwuxin <448901948@qq.com>
-// +----------------------------------------------------------------------
 
 namespace think\migration\command;
 
@@ -19,6 +10,8 @@ use Phinx\Util\Util;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Env;
+use think\migration\adapter\InputAdapter;
+use think\migration\adapter\OutputAdapter;
 use think\migration\Command;
 use think\migration\Migrator;
 
@@ -42,8 +35,10 @@ abstract class Migrate extends Command
         // Execute the migration and log the time elapsed.
         $start = microtime(true);
 
-        $startTime = time();
         $direction = (MigrationInterface::UP === $direction) ? MigrationInterface::UP : MigrationInterface::DOWN;
+        $migration->setMigratingUp($direction === MigrationInterface::UP);
+
+        $startTime = time();
         $migration->setAdapter($this->getAdapter());
 
         // begin the transaction if the adapter supports it
@@ -78,7 +73,7 @@ abstract class Migrate extends Command
 
         // Record it in the database
         $this->getAdapter()
-            ->migrated($migration, $direction, date('Y-m-d H:i:s', $startTime), date('Y-m-d H:i:s', time()));
+             ->migrated($migration, $direction, date('Y-m-d H:i:s', $startTime), date('Y-m-d H:i:s', time()));
 
         $end = microtime(true);
 
@@ -130,7 +125,9 @@ abstract class Migrate extends Command
                     }
 
                     // instantiate it
-                    $migration = new $class($version, $this->input, $this->output);
+                    $inputAdapter  = new InputAdapter($this->input);
+                    $outputAdapter = new OutputAdapter($this->output);
+                    $migration     = new $class($version, $inputAdapter, $outputAdapter);
 
                     if (!($migration instanceof AbstractMigration)) {
                         throw new \InvalidArgumentException(sprintf('The class "%s" in file "%s" must extend \Phinx\Migration\AbstractMigration', $class, $filePath));

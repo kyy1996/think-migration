@@ -1,11 +1,4 @@
 <?php
-// +----------------------------------------------------------------------
-// | TopThink [ WE CAN DO IT JUST THINK IT ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016 http://www.topthink.com All rights reserved.
-// +----------------------------------------------------------------------
-// | Author: zhangyajun <448901948@qq.com>
-// +----------------------------------------------------------------------
 
 namespace think\migration\command\seed;
 
@@ -24,12 +17,13 @@ class Run extends Seed
     {
         $this->setName('db:seed')
              ->setDescription('Run database seeders')
-             ->addOption('--seed', '-s', InputOption::VALUE_REQUIRED, 'What is the name of the seeder?')
+             ->addOption('--seed', '-s', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'What is the name of the seeder?')
              ->setHelp(<<<EOT
-                The <info>db:seed</info> command runs all available or individual seeders
+The <info>db:seed</info> command runs all available or individual seeders
 
 <info>php console db:seed</info>
 <info>php console db:seed -s UserSeeder</info>
+<info>php think db:seed -s UserSeeder -s PermissionSeeder -s LogSeeder</info>
 <info>php console db:seed -v</info>
 
 EOT
@@ -45,11 +39,19 @@ EOT
      */
     protected function execute(Input $input, Output $output)
     {
-        $seed = $input->getOption('seed');
+        $seedSet = $input->getOption('seed');
 
         // run the seed(ers)
         $start = microtime(true);
-        $this->seed($seed);
+        if (empty($seedSet)) {
+            // run all the seed(ers)
+            $this->seed();
+        } else {
+            // run seed(ers) specified in a comma-separated list of classes
+            foreach ($seedSet as $seed) {
+                $this->seed(trim($seed));
+            }
+        }
         $end = microtime(true);
 
         $output->writeln('');

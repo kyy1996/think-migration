@@ -1,11 +1,4 @@
 <?php
-// +----------------------------------------------------------------------
-// | TopThink [ WE CAN DO IT JUST THINK IT ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2016 http://www.topthink.com All rights reserved.
-// +----------------------------------------------------------------------
-// | Author: zhangyajun <448901948@qq.com>
-// +----------------------------------------------------------------------
 
 namespace think\migration\command\migrate;
 
@@ -27,13 +20,22 @@ class Rollback extends Migrate
              ->addOption('--target', '-t', InputOption::VALUE_REQUIRED, 'The version number to rollback to')
              ->addOption('--date', '-d', InputOption::VALUE_REQUIRED, 'The date to rollback to')
              ->addOption('--force', '-f', InputOption::VALUE_NONE, 'Force rollback to ignore breakpoints')
+             ->addOption('--dry-run', '-x', InputOption::VALUE_NONE, 'Dump query to standard output instead of executing it')
              ->setHelp(<<<EOT
 The <info>migrate:rollback</info> command reverts the last migration, or optionally up to a specific version
 
-<info>php console migrate:rollback</info>
-<info>php console migrate:rollback -t 20111018185412</info>
-<info>php console migrate:rollback -d 20111018</info>
-<info>php console migrate:rollback -v</info>
+<info>php think migrate:rollback</info>
+<info>php think migrate:rollback -t 20111018185412</info>
+<info>php think migrate:rollback -d 20111018</info>
+<info>php think migrate:rollback -v</info>
+<info>php think migrate:rollback -t 20111018185412 -f</info>
+
+If you have a breakpoint set, then you can rollback to target 0 and the rollbacks will stop at the breakpoint.
+<info>php think migrate:rollback -t 0 </info>
+
+The <info>version_order</info> configuration option is used to determine the order of the migrations when rolling back.
+This can be used to allow the rolling back of the last executed migration instead of the last created one, or combined
+with the <info>-d|--date</info> option to rollback to a certain date using the migration start times to order them.
 
 EOT
              );
